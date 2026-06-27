@@ -107,13 +107,13 @@ public class ProductService {
         return new PageImpl<>(List.of(fallbackUser), pageable, 1);
     }
 
-    public Page<Customer> rateLimitFallback(Pageable pageable, Throwable ex) {
-        Customer fallbackUser = new Customer();
+    public Page<ProductWithOrdersDTO> rateLimitFallback(Pageable pageable, Throwable ex) {
+        ProductWithOrdersDTO fallbackUser = new ProductWithOrdersDTO();
         String fallBack =
                 """
                 Apologize!.. Too many requests, please retry after sometime.!
                 """;
-        fallbackUser.setName(fallBack);
+        fallbackUser.setDescription(fallBack);
         return new PageImpl<>(List.of(fallbackUser), pageable, 1);
     }
 

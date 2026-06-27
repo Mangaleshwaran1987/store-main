@@ -77,8 +77,8 @@ public class CustomerService {
         return new PageImpl<>(customersToCustomerDTOs, pageable, customerPage.getTotalElements());
     }
 
-    public Page<Customer> fallbackMessage(Pageable pageable, Throwable ex) {
-        Customer fallbackUser = new Customer();
+    public Page<CustomerDTO> fallbackMessage(Pageable pageable, Throwable ex) {
+        CustomerDTO fallbackUser = new CustomerDTO();
         String fallBack =
                 """
                 Apologize!.. There is some downstream connectivity issue, please retry after sometime.!
@@ -106,4 +106,15 @@ public class CustomerService {
         customerDTO.setName(fallBack);
         return customerDTO;
     }
+
+    /**
+     * To Test the circuit breaker
+     *
+     * @return
+     */
+    /*@CircuitBreaker(name = "customerDB", fallbackMethod = "fallbackMessage")
+    public Page<CustomerDTO> triggerCircuitBreaker(Pageable pageable) {
+        throw new RuntimeException("Random failure");
+    }*/
+
 }

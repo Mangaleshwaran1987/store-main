@@ -57,4 +57,9 @@ public class CustomerController {
         Pageable pageable = PageRequest.of(page, size);
         return customerService.search(queryStr, pageable);
     }
+
+    /*@GetMapping("/enableCB")
+    public Page<CustomerDTO> testCircuitBreaker(Pageable pageable) {
+        return customerService.triggerCircuitBreaker(pageable);
+    }*/
 }
