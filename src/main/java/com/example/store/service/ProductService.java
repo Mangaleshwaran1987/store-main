@@ -40,8 +40,9 @@ public class ProductService {
     }
     // Removing cached values while adding new product
     @Caching(evict = {@CacheEvict(value = "products", allEntries = true)})
+    @RateLimiter(name = "customerRateLimiter", fallbackMethod = "rateLimitFallback")
     public ProductDTO create(ProductDTO dto) {
-        log.info("createAPI", logBegin);
+        log.info(String.format("createAPI%s", logBegin));
         return mapper.toDto(productRepository.save(mapper.toEntity(dto)));
     }
 
@@ -51,7 +52,7 @@ public class ProductService {
     @RateLimiter(name = "customerRateLimiter", fallbackMethod = "rateLimitFallback")
     @CircuitBreaker(name = "customerDB", fallbackMethod = "fallbackMessage")
     public Page<ProductWithOrdersDTO> getAllProducts(Pageable pageable) {
-        log.info("getAllProducts API", logBegin);
+        log.info(String.format("getAllProducts API%s", logBegin));
         return productRepository.findAll(pageable).map(product -> {
             ProductWithOrdersDTO dto = new ProductWithOrdersDTO();
             dto.setId(product.getId());
@@ -68,13 +69,13 @@ public class ProductService {
                     .toList();
 
             dto.setOrders(orders);
-            log.info("getAllProducts API", logEnd);
+            log.info(String.format("getAllProducts API%s", logEnd));
             return dto;
         });
     }
 
     public ProductWithOrdersDTO getProductWithOrders(Long productId) {
-        log.info("getProductById API", logBegin);
+        log.info(String.format("getProductById API%s", logBegin));
         Product product =
                 productRepository.findById(productId).orElseThrow(() -> new RuntimeException("Product not found"));
 
@@ -92,7 +93,7 @@ public class ProductService {
         response.setId(product.getId());
         response.setDescription(product.getDescription());
         response.setOrders(orders);
-        log.info("getProductById API", logEnd);
+        log.info(String.format("getProductById API%s", logEnd));
         return response;
     }
 
@@ -114,5 +115,15 @@ public class ProductService {
                 """;
         fallbackUser.setName(fallBack);
         return new PageImpl<>(List.of(fallbackUser), pageable, 1);
+    }
+
+    public ProductDTO rateLimitFallback(ProductDTO dto, Throwable ex) {
+        ProductDTO productDTO = new ProductDTO();
+        String fallBack =
+                """
+                Apologize!.. Too many requests, please retry after sometime.!
+                """;
+        productDTO.setDescription(fallBack);
+        return productDTO;
     }
 }

@@ -52,8 +52,9 @@ public class OrderService {
 
     // Removing cached values while adding new order
     @Caching(evict = {@CacheEvict(value = "orders", allEntries = true)})
+    @RateLimiter(name = "customerRateLimiter", fallbackMethod = "rateLimitFallback")
     public OrderDTO create(OrderDTO dto) {
-        log.info("createAPI", logBegin);
+        log.info(String.format("createAPI%s", logBegin));
         Order order = orderMapper.toEntity(dto);
         // Set Customer
         Customer customer = customerRepository.findById(dto.getCustomerId()).orElseThrow();
@@ -65,7 +66,7 @@ public class OrderService {
                     .toList();
             order.setProducts(products);
         }
-        log.info("createAPI", logEnd);
+        log.info(String.format("createAPI%s", logEnd));
         return orderMapper.toDto(orderRepository.save(order));
     }
 
@@ -75,7 +76,7 @@ public class OrderService {
     @RateLimiter(name = "customerRateLimiter", fallbackMethod = "rateLimitFallback")
     @CircuitBreaker(name = "customerDB", fallbackMethod = "fallbackMessage")
     public Page<OrderDTO> getAll(Pageable pageable) {
-        log.info("getAll order API", logBegin);
+        log.info(String.format("getAll order API%s", logBegin));
         return orderRepository.findAll(pageable).map(order -> {
             OrderDTO dto = new OrderDTO();
             dto.setId(order.getId());
@@ -92,13 +93,13 @@ public class OrderService {
                     .toList();
 
             dto.setProducts(products);
-            log.info("getAll order API", logEnd);
+            log.info(String.format("getAll order API%s", logEnd));
             return dto;
         });
     }
 
     public OrderDTO getById(Long id) {
-        log.info("getOrder by Id API", logBegin);
+        log.info(String.format("getOrder by Id API%s", logBegin));
         Order order = orderRepository.findById(id).orElseThrow(() -> new RuntimeException("Order not found"));
 
         OrderDTO dto = new OrderDTO();
@@ -116,7 +117,7 @@ public class OrderService {
                 .toList();
 
         dto.setProducts(products);
-        log.info("getOrder by Id API", logEnd);
+        log.info(String.format("getOrder by Id API%s", logEnd));
         return dto;
     }
 
@@ -138,5 +139,15 @@ public class OrderService {
                 """;
         fallbackUser.setName(fallBack);
         return new PageImpl<>(List.of(fallbackUser), pageable, 1);
+    }
+
+    public OrderDTO rateLimitFallback(OrderDTO dto, Throwable ex) {
+        OrderDTO orderDTO = new OrderDTO();
+        String fallBack =
+                """
+                Apologize!.. Too many requests, please retry after sometime.!
+                """;
+        orderDTO.setDescription(fallBack);
+        return orderDTO;
     }
 }

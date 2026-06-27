@@ -40,10 +40,11 @@ public class CustomerService {
                 @CacheEvict(value = "customer-search", allEntries = true),
                 @CacheEvict(value = "customers", allEntries = true)
             })
+    @RateLimiter(name = "customerRateLimiter", fallbackMethod = "rateLimitFallback")
     public CustomerDTO create(CustomerDTO dto) {
-        log.info("createAPI", logBegin);
+        log.info(String.format("createAPI%s", logBegin));
         Customer entity = customerMapper.toEntity(dto);
-        log.info("createAPI", logEnd);
+        log.info(String.format("createAPI%s", logEnd));
         return customerMapper.toDto(customerRepository.save(entity));
     }
 
@@ -53,10 +54,10 @@ public class CustomerService {
     @RateLimiter(name = "customerRateLimiter", fallbackMethod = "rateLimitFallback")
     @CircuitBreaker(name = "customerDB", fallbackMethod = "fallbackMessage")
     public Page<CustomerDTO> getAll(Pageable pageable) {
-        log.info("getALL API", logBegin);
+        log.info(String.format("getALL API%s", logBegin));
         Page<Customer> customerPage = customerRepository.findAll(pageable);
         List<CustomerDTO> customersToCustomerDTOs = customerMapper.customersToCustomerDTOs(customerPage.getContent());
-        log.info("getALL API", logEnd);
+        log.info(String.format("getALL API%s", logEnd));
         return new PageImpl<>(customersToCustomerDTOs, pageable, customerPage.getTotalElements());
     }
 
@@ -66,13 +67,13 @@ public class CustomerService {
     @RateLimiter(name = "customerRateLimiter", fallbackMethod = "rateLimitFallback")
     @CircuitBreaker(name = "customerDB", fallbackMethod = "fallbackMessage")
     public Page<CustomerDTO> search(String queryStr, Pageable pageable) {
-        log.info("search API", logBegin);
+        log.info(String.format("search API%s", logBegin));
         // Fetch customers based on query string with pagination
         Page<Customer> customerPage = customerRepository.searchCustomers(queryStr.toLowerCase(), pageable);
         List<Customer> customers = customerPage.getContent();
         // Fetch orders in batch by sending matched customers to avoid N+1 Problem and map itn Customer DTO
         List<CustomerDTO> customersToCustomerDTOs = customerMapper.customersToCustomerDTOs(customers);
-        log.info("search API", logBegin);
+        log.info(String.format("search API%s", logEnd));
         return new PageImpl<>(customersToCustomerDTOs, pageable, customerPage.getTotalElements());
     }
 
@@ -94,5 +95,15 @@ public class CustomerService {
                 """;
         fallbackUser.setName(fallBack);
         return new PageImpl<>(List.of(fallbackUser), pageable, 1);
+    }
+
+    public CustomerDTO rateLimitFallback(CustomerDTO dto, Throwable ex) {
+        CustomerDTO customerDTO = new CustomerDTO();
+        String fallBack =
+                """
+                Apologize!.. Too many requests, please retry after sometime.!
+                """;
+        customerDTO.setName(fallBack);
+        return customerDTO;
     }
 }
