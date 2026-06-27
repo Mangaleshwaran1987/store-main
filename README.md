@@ -2,23 +2,23 @@
 The Store application keeps track of customers and orders in a database.
 
 # Task Completion
-* Task 1 : Extend the order endpoint to find a specific order, by ID
+* **Task 1 : Extend the order endpoint to find a specific order, by ID**
   * Created the endpoint to get the details by Id.
    
-* Task 2 : Extend the customer endpoint to find customers based on a query string to match a substring of one of the words in their name
+* **Task 2 : Extend the customer endpoint to find customers based on a query string to match a substring of one of the words in their name**
   * Created the endpoint to find customers by query string, and added order details of the customer in response. Implemented **Redis cache** and added **INDEXING** in DB for better performance.
 
-* Task 3 : Users have complained that in production the GET endpoints can get very slow. The database is unfortunately not co-located with the application server, and there's high latency between the two. Identify if there are any optimisations that can improve performance
+* **Task 3 : Users have complained that in production the GET endpoints can get very slow. The database is unfortunately not co-located with the application server, and there's high latency between the two. Identify if there are any optimisations that can improve performance**
   * Refactored the API's with **Redis Cache** & Updated **@EntityGraph, JOIN** query in repository. Added **PAGINATION** for getALL api's for better performance.
   * Made relevant mapper changes.
 
-* Task 4 : Add a new endpoint /products to model products which appear in an order
+* **Task 4 : Add a new endpoint /products to model products which appear in an order**
   * Created POST endpoint to add product, Updated the schema.sql and added index in DB.
   * Created GET ALL products endpoint that returns order details as well. Created PAGINATION and updated with Redis cache.
   * Created GET product by id endpoint that returns order details as well.
   * Updated GET Order endpoint to return prodcut details as well and made relevant mapper changes.
 
-* Bonus features implemented
+# Bonus features implemented
   * Created docker script to deliver it as an image.
   * Implemented **CICD** pipeline which includes **SonarQube, OWASP, build, Test and deploy**
   * Implemented **HikariCP DB connection pooling**.
