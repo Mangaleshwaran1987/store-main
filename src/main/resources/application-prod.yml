@@ -57,3 +57,11 @@ resilience4j:
         limitForPeriod: 5        # max requests
         limitRefreshPeriod: 10s  # time window
         timeoutDuration: 0       # fail immediately
+      orderRateLimiter:
+        limitForPeriod: 25        # max requests
+        limitRefreshPeriod: 10s  # time window
+        timeoutDuration: 0
+      productRateLimiter:
+        limitForPeriod: 25        # max requests
+        limitRefreshPeriod: 10s  # time window
+        timeoutDuration: 0

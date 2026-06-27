@@ -16,9 +16,10 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
@@ -52,7 +53,8 @@ public class OrderService {
 
     // Removing cached values while adding new order
     @Caching(evict = {@CacheEvict(value = "orders", allEntries = true)})
-    @RateLimiter(name = "customerRateLimiter", fallbackMethod = "rateLimitFallback")
+    @CircuitBreaker(name = "customerDB", fallbackMethod = "fallbackMessage")
+    @RateLimiter(name = "orderRateLimiter", fallbackMethod = "rateLimitFallback")
     public OrderDTO create(OrderDTO dto) {
         log.info(String.format("createAPI%s", logBegin));
         Order order = orderMapper.toEntity(dto);
@@ -73,7 +75,7 @@ public class OrderService {
     @Cacheable(
             value = "orders",
             key = "T(String).format('%d-%d-%s', #pageable.pageNumber, #pageable.pageSize, #pageable.sort.toString())")
-    @RateLimiter(name = "customerRateLimiter", fallbackMethod = "rateLimitFallback")
+    @RateLimiter(name = "orderRateLimiter", fallbackMethod = "rateLimitFallback")
     @CircuitBreaker(name = "customerDB", fallbackMethod = "fallbackMessage")
     public Page<OrderDTO> getAll(Pageable pageable) {
         log.info(String.format("getAll order API%s", logBegin));
@@ -121,23 +123,23 @@ public class OrderService {
         return dto;
     }
 
-    public Page<Customer> fallbackMessage(Pageable pageable, Throwable ex) {
-        Customer fallbackUser = new Customer();
-        String fallBack =
-                """
-                Apologize!.. There is some downstream connectivity issue, please retry after sometime.!
-                """;
-        fallbackUser.setName(fallBack);
-        return new PageImpl<>(List.of(fallbackUser), pageable, 1);
+    public OrderDTO fallbackMessage(OrderDTO orderDTO, Throwable ex) {
+        throw new ResponseStatusException(
+                HttpStatus.INTERNAL_SERVER_ERROR, "Apologize!.. Too many requests, please retry after sometime.");
+    }
+
+    public Page<OrderDTO> fallbackMessage(Pageable pageable, Throwable ex) {
+        throw new ResponseStatusException(
+                HttpStatus.INTERNAL_SERVER_ERROR, "Apologize!.. Too many requests, please retry after sometime.");
     }
 
     public OrderDTO rateLimitFallback(OrderDTO dto, Throwable ex) {
-        OrderDTO orderDTO = new OrderDTO();
-        String fallBack =
-                """
-                Apologize!.. Too many requests, please retry after sometime.!
-                """;
-        orderDTO.setDescription(fallBack);
-        return orderDTO;
+        throw new ResponseStatusException(
+                HttpStatus.TOO_MANY_REQUESTS, "Apologize!.. Too many requests, please retry after sometime.");
+    }
+
+    public Page<OrderDTO> rateLimitFallback(Pageable pageable, Throwable ex) {
+        throw new ResponseStatusException(
+                HttpStatus.TOO_MANY_REQUESTS, "Apologize!.. Too many requests, please retry after sometime.");
     }
 }

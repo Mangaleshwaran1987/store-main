@@ -13,7 +13,9 @@ import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
@@ -71,40 +73,34 @@ public class CustomerService {
         // Fetch customers based on query string with pagination
         Page<Customer> customerPage = customerRepository.searchCustomers(queryStr.toLowerCase(), pageable);
         List<Customer> customers = customerPage.getContent();
-        // Fetch orders in batch by sending matched customers to avoid N+1 Problem and map itn Customer DTO
         List<CustomerDTO> customersToCustomerDTOs = customerMapper.customersToCustomerDTOs(customers);
         log.info(String.format("search API%s", logEnd));
         return new PageImpl<>(customersToCustomerDTOs, pageable, customerPage.getTotalElements());
     }
 
     public Page<CustomerDTO> fallbackMessage(Pageable pageable, Throwable ex) {
-        CustomerDTO fallbackUser = new CustomerDTO();
-        String fallBack =
-                """
-                Apologize!.. There is some downstream connectivity issue, please retry after sometime.!
-                """;
-        fallbackUser.setName(fallBack);
-        return new PageImpl<>(List.of(fallbackUser), pageable, 1);
+        throw new ResponseStatusException(
+                HttpStatus.INTERNAL_SERVER_ERROR, "Apologize!.. Too many requests, please retry after sometime.");
     }
 
-    public Page<Customer> rateLimitFallback(Pageable pageable, Throwable ex) {
-        Customer fallbackUser = new Customer();
-        String fallBack =
-                """
-                Apologize!.. Too many requests, please retry after sometime.!
-                """;
-        fallbackUser.setName(fallBack);
-        return new PageImpl<>(List.of(fallbackUser), pageable, 1);
+    public Page<CustomerDTO> fallbackMessage(String queryStr, Pageable pageable, Throwable ex) {
+        throw new ResponseStatusException(
+                HttpStatus.INTERNAL_SERVER_ERROR, "Apologize!.. Too many requests, please retry after sometime.");
+    }
+
+    public Page<CustomerDTO> rateLimitFallback(Pageable pageable, Throwable ex) {
+        throw new ResponseStatusException(
+                HttpStatus.TOO_MANY_REQUESTS, "Apologize!.. Too many requests, please retry after sometime.");
+    }
+
+    public Page<CustomerDTO> rateLimitFallback(String queryStr, Pageable pageable, Throwable ex) {
+        throw new ResponseStatusException(
+                HttpStatus.TOO_MANY_REQUESTS, "Apologize!.. Too many requests, please retry after sometime.");
     }
 
     public CustomerDTO rateLimitFallback(CustomerDTO dto, Throwable ex) {
-        CustomerDTO customerDTO = new CustomerDTO();
-        String fallBack =
-                """
-                Apologize!.. Too many requests, please retry after sometime.!
-                """;
-        customerDTO.setName(fallBack);
-        return customerDTO;
+        throw new ResponseStatusException(
+                HttpStatus.TOO_MANY_REQUESTS, "Apologize!.. Too many requests, please retry after sometime.");
     }
 
     /**
