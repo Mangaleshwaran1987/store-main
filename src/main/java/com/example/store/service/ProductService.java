@@ -3,14 +3,24 @@ package com.example.store.service;
 import com.example.store.dto.OrderSummaryDTO;
 import com.example.store.dto.ProductDTO;
 import com.example.store.dto.ProductWithOrdersDTO;
+import com.example.store.entity.Customer;
 import com.example.store.entity.Product;
 import com.example.store.mapper.ProductMapper;
 import com.example.store.repository.OrderRepository;
 import com.example.store.repository.ProductRepository;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 
 import java.util.List;
 
@@ -19,19 +29,29 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final OrderRepository orderRepository;
     private final ProductMapper mapper;
+    private static final Logger log = LogManager.getLogger(ProductService.class);
+    private static final String logBegin = " - start";
+    private static final String logEnd = " - end";
 
     public ProductService(ProductRepository productRepository, OrderRepository orderRepository, ProductMapper mapper) {
         this.productRepository = productRepository;
         this.orderRepository = orderRepository;
         this.mapper = mapper;
     }
-
+    // Removing cached values while adding new product
+    @Caching(evict = {@CacheEvict(value = "products", allEntries = true)})
     public ProductDTO create(ProductDTO dto) {
+        log.info("createAPI", logBegin);
         return mapper.toDto(productRepository.save(mapper.toEntity(dto)));
     }
 
+    @Cacheable(
+            value = "products",
+            key = "T(String).format('%d-%d-%s', #pageable.pageNumber, #pageable.pageSize, #pageable.sort.toString())")
+    @RateLimiter(name = "customerRateLimiter", fallbackMethod = "rateLimitFallback")
+    @CircuitBreaker(name = "customerDB", fallbackMethod = "fallbackMessage")
     public Page<ProductWithOrdersDTO> getAllProducts(Pageable pageable) {
-
+        log.info("getAllProducts API", logBegin);
         return productRepository.findAll(pageable).map(product -> {
             ProductWithOrdersDTO dto = new ProductWithOrdersDTO();
             dto.setId(product.getId());
@@ -48,13 +68,13 @@ public class ProductService {
                     .toList();
 
             dto.setOrders(orders);
-
+            log.info("getAllProducts API", logEnd);
             return dto;
         });
     }
 
     public ProductWithOrdersDTO getProductWithOrders(Long productId) {
-
+        log.info("getProductById API", logBegin);
         Product product =
                 productRepository.findById(productId).orElseThrow(() -> new RuntimeException("Product not found"));
 
@@ -72,7 +92,27 @@ public class ProductService {
         response.setId(product.getId());
         response.setDescription(product.getDescription());
         response.setOrders(orders);
-
+        log.info("getProductById API", logEnd);
         return response;
+    }
+
+    public Page<Customer> fallbackMessage(Pageable pageable, Throwable ex) {
+        Customer fallbackUser = new Customer();
+        String fallBack =
+                """
+                Apologize!.. There is some downstream connectivity issue, please retry after sometime.!
+                """;
+        fallbackUser.setName(fallBack);
+        return new PageImpl<>(List.of(fallbackUser), pageable, 1);
+    }
+
+    public Page<Customer> rateLimitFallback(Pageable pageable, Throwable ex) {
+        Customer fallbackUser = new Customer();
+        String fallBack =
+                """
+                Apologize!.. Too many requests, please retry after sometime.!
+                """;
+        fallbackUser.setName(fallBack);
+        return new PageImpl<>(List.of(fallbackUser), pageable, 1);
     }
 }

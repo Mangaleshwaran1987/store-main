@@ -5,14 +5,11 @@ import com.example.store.service.CustomerService;
 
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/customer")
@@ -20,16 +17,27 @@ import java.util.List;
 public class CustomerController {
     private final CustomerService customerService;
 
+    /**
+     * Create Customer API
+     *
+     * @param customerDTO
+     * @return
+     */
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @CacheEvict(value = "customer-search", allEntries = true) // Removing cached values while adding new customer
     public CustomerDTO createCustomer(@RequestBody CustomerDTO customerDTO) {
         return customerService.create(customerDTO);
     }
 
+    /**
+     * * Included Pagination for better performance Return customer details
+     *
+     * @param pageable
+     * @return
+     */
     @GetMapping
-    public List<CustomerDTO> getAllCustomers() {
-        return customerService.getAll();
+    public Page<CustomerDTO> getAllCustomers(Pageable pageable) {
+        return customerService.getAll(pageable);
     }
 
     /**

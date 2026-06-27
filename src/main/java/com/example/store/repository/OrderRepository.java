@@ -16,6 +16,14 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @Query("SELECT o FROM Order o JOIN o.products p WHERE p.id = :productId")
     List<Order> findByProductId(@Param("productId") Long productId);
 
+    /**
+     * Implemented EntityGraph to N+1 problem Task 4 : Change the orders endpoint to return a list of products contained
+     * in the order
+     *
+     * @param pageable the pageable to request a paged result, can be {@link Pageable#unpaged()}, must not be
+     *     {@literal null}.
+     * @return
+     */
     @EntityGraph(attributePaths = {"products", "customer"})
     Page<Order> findAll(Pageable pageable);
 }

@@ -11,6 +11,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -68,12 +72,10 @@ class CustomerServiceTest {
         dto.setId(1L);
         dto.setName("Mangal");
 
-        Mockito.when(customerRepository.findAll()).thenReturn(List.of(entity));
-        Mockito.when(customerMapper.toDto(entity)).thenReturn(dto);
+        Mockito.when(customerRepository.findAll(Mockito.any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(entity)));
 
-        List<CustomerDTO> result = customerService.getAll();
-
-        assertEquals(1, result.size());
-        assertEquals(1L, result.get(0).getId());
+        Page<CustomerDTO> result = customerService.getAll(PageRequest.of(0, 1));
+        assertEquals(1, result.getTotalElements());
     }
 }

@@ -19,7 +19,7 @@ public class Order {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id")
     private Customer customer;
-
+    // Task 4 : Change the orders endpoint to return a list of products contained in the order
     @ManyToMany
     @JoinTable(
             name = "order_products",

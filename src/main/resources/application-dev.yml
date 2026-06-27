@@ -3,6 +3,15 @@ spring:
     url: jdbc:postgresql://localhost:5433/store
     username: admin
     password: admin
+    hikari:
+      pool-name: HikariPool
+      maximum-pool-size: 10       # max DB connections
+      minimum-idle: 5             # min idle connections
+      connection-timeout: 20000   # 20 sec
+      idle-timeout: 30000         # 30 sec
+      max-lifetime: 1800000       # 30 min
+      leak-detection-threshold: 2000
+
   jpa:
     hibernate:
       ddl-auto: validate
@@ -25,7 +34,26 @@ management:
     web:
       base-path: /manage
       exposure:
-        include: health,info,beans,env,metrics,threaddump
+        include: health,info,beans,env,metrics,threaddump,circuitbreakers
   endpoint:
     health:
       show-details: always
+logging:
+  level:
+    root: INFO
+resilience4j:
+  circuitbreaker:
+    instances:
+      customerDB:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+  ratelimiter:
+    instances:
+      customerRateLimiter:
+        limitForPeriod: 5        # max requests
+        limitRefreshPeriod: 10s  # time window
+        timeoutDuration: 0       # fail immediately

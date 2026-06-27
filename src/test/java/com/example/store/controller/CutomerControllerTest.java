@@ -12,7 +12,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -43,6 +45,9 @@ class CustomerControllerTest {
     @Autowired
     ObjectMapper mapper;
 
+    @MockitoBean
+    private CacheManager cacheManager;
+
     @Test
     void testCreateCustomer() throws Exception {
 
@@ -72,12 +77,10 @@ class CustomerControllerTest {
         CustomerDTO customer = new CustomerDTO();
         customer.setId(1L);
         customer.setName("Mangal");
-
-        Mockito.when(service.getAll()).thenReturn(List.of(customer));
-
-        mockMvc.perform(get("/customer"))
+        Mockito.when(service.getAll(Mockito.any())).thenReturn(new PageImpl<>(List.of(customer)));
+        mockMvc.perform(get("/customer?page=0&size=1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(1))
-                .andExpect(jsonPath("$[0].name").value("Mangal"));
+                .andExpect(jsonPath("$.content[0].id").value(1))
+                .andExpect(jsonPath("$.content[0].name").value("Mangal"));
     }
 }
