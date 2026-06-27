@@ -1,6 +1,51 @@
 # Store Application
 The Store application keeps track of customers and orders in a database.
 
+# Task Completion
+* Task 1 : Extend the order endpoint to find a specific order, by ID
+  * Created the endpoint to get the details by Id.
+   
+* Task 2 : Extend the customer endpoint to find customers based on a query string to match a substring of one of the words in their name
+  * Created the endpoint to find customers by query string, and added order details of the customer in response. Implemented redis cache and added indexing in DB for better performance.
+
+* Task 3 : Users have complained that in production the GET endpoints can get very slow. The database is unfortunately not co-located with the application server, and there's high latency between the two. Identify if there are any optimisations that can improve performance
+  * Refactored the API's with Redis Cache & Updated @EntityGraph, JOIN query in repository. Added PAGINATION for getALL api's for better performance.
+  * Made relevant mapper changes.
+
+* Task 4 : Add a new endpoint /products to model products which appear in an order
+  * Created POST endpoint to add product, Updated the schema.sql and added index in DB.
+  * Created GET ALL products endpoint that returns order details as well. Created PAGINATION and updated with Redis cache.
+  * Created GET product by id endpoint that returns order details as well.
+  * Updated GET Order endpoint to return prodcut details as well and made relevant mapper changes.
+
+* Bonus features implemented
+  * Created docker script to deliver it as an image.
+  * Implemented CICD pipeline which includes SonarQube, OWASP, build, Test and deploy
+  * Implemented HikariCP DB connection pooling.
+  * Added Log4j implementation for logging.
+  * Created helm chart for the deployment
+    * Basic commands to trouble shoot and deployment.
+        docker build -t store-main:1.0.0
+        docker images
+        docker run -d -p 8080:8080 --name store-main store-main:1.0.0
+        helm install store-main
+        helm uninstall store-api
+        kubectl get pods
+        kubectl logs <pod-name>
+        kubectl logs store-main-6df9c89b5c-h7jvf
+  * Implemented RATELIMIT and CIRCUIT-BREAKER for the fault tolerance.
+  * Added ACTUATOR framework endpoints : health,info,beans,env,metrics,threaddump,circuitbreakers for PRODUCTION Monitoring purpose.
+      • Health → http://localhost:8080/manage/health
+      • Environment → http://localhost:8080/manage/env
+      • Metrics → http://localhost:8080/manage/metrics
+      • Thread dump → http://localhost:8080/manage/threaddump
+      • JVM Memory utilization http://localhost:8080/manage/metrics/jvm.memory.used
+      • HTTP Requests latency : http://localhost:8080/manage/metrics/http.server.requests
+      • Hikaricp connection pool : http://localhost:8080/manage/metrics/hikaricp.connections
+      • Circuit breaker status : http://localhost:8080/manage/circuitbreakers
+  * Added Testcases for all controller and services. it will be executed as a part of CICD.
+  * Created environment specific aplication.yml files to support all the environments.
+
 # Assumptions
 This README assumes you're using a posix environment. It's possible to run this on Windows as well:
 * Instead of `./gradlew` use `gradlew.bat`
