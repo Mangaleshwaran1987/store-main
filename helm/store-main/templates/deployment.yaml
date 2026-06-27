@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: {{ include "store-main.fullname" . }}
+
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: store-main
+  template:
+    metadata:
+      labels:
+        app: store-main
+    spec:
+      serviceAccountName: {{ include "store-main.serviceAccountName" . }}
+      # Container configuraion
+      containers:
+        - name: store-main
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 8080
+          # To application health check
+          readinessProbe:
+            httpGet:
+              path: /manage/health/readiness
+              port: 8080
+
+          livenessProbe:
+            httpGet:
+              path: /manage/health/liveness
+              port: 8080
+
+          resources:
+  {{ toYaml .Values.resources | indent 10 }}

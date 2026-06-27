@@ -1,0 +1,23 @@
+replicaCount: 2
+image:
+  repository: mydockerhub/store-main # Provide repository path here to read base image
+  tag: latest # provide version number
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8080  #Add your port here
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+serviceAccount:
+  create: true
+
+ingress:
+  enabled: false
