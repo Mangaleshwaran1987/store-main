@@ -45,7 +45,7 @@ The Store application keeps track of customers and orders in a database.
     * Circuit breaker status : http://localhost:8080/manage/circuitbreakers
   * Added **Testcases** for all controller and services. it will be executed as a part of CICD.
   * Created **environment specific aplication.yml** files to support all the environments.
-* **Note** : I have not created API gateway for this project as its a demo assignment. but I handled **RATELIMIT** and **CIRCUIT-BREAKER** method level. please have a look on the service classes.
+* **Note** : I have not created API gateway for this project as it's a demo assignment. but I handled **RATELIMIT** and **CIRCUIT-BREAKER** in the service level method. please have a look on the service classes.
 
 # Assumptions
 This README assumes you're using a posix environment. It's possible to run this on Windows as well:
