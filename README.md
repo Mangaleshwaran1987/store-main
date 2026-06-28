@@ -21,7 +21,8 @@ The Store application keeps track of customers and orders in a database.
 # Bonus features implemented
   * Created docker script to deliver it as an image.
   * Implemented **CICD** pipeline which includes **SonarQube, OWASP, build, Test and deploy**
-  * Please have a look on .github/workflows/ci-cd.xml
+    * **CICD pipeline** : Please have a look on **.github/workflows/ci-cd.xml**
+    * **helm chart** : Please have a look on  **/helm/store-main**
   * Implemented **HikariCP DB connection pooling**.(please have a look on application yml files)
   * Added **Log4j** implementation for logging.
   * Created **helm chart** for the deployment
