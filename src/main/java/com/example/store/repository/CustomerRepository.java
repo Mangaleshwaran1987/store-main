@@ -10,7 +10,7 @@ import org.springframework.data.repository.query.Param;
 
 public interface CustomerRepository extends JpaRepository<Customer, Long> {
     /**
-     * ** Implemented Entity graph to avoid N+1 problem with order table
+     * ** Implemented pagination for better performance
      *
      * @param query
      * @param pageable

@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
-    // To avoid N+1 problem. It's a lazy loading.
+    // EntityGraph to avoid N+1 problem. It's a lazy loading.
     @EntityGraph(attributePaths = {"orders", "orders.customer"})
     Page<Product> findAll(Pageable pageable);
 }
